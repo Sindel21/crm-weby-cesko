@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { TrendingUp, Users, Target, CheckCircle } from 'lucide-react';
+import { ScraperControl } from '@/components/ScraperControl';
 
 const Dashboard = () => {
     const [statsData, setStatsData] = useState<any>(null);
@@ -35,6 +36,8 @@ const Dashboard = () => {
                 <h1 className="text-3xl font-bold tracking-tight">Sales Dashboard</h1>
                 <p className="text-zinc-500 mt-2">Welcome back! Here's what's happening today.</p>
             </header>
+
+            <ScraperControl />
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {stats.map((stat, i) => (
