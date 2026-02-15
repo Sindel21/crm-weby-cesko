@@ -79,6 +79,18 @@ export async function POST(req: Request) {
             created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
         )`;
 
+        await sql`CREATE TABLE IF NOT EXISTS scan_status (
+            id SERIAL PRIMARY KEY,
+            category TEXT,
+            current_city TEXT,
+            total_towns INTEGER,
+            completed_towns INTEGER DEFAULT 0,
+            leads_found INTEGER DEFAULT 0,
+            is_active BOOLEAN DEFAULT FALSE,
+            started_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+            updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+        )`;
+
         await sql`CREATE TABLE IF NOT EXISTS settings (
             key TEXT PRIMARY KEY,
             value TEXT,

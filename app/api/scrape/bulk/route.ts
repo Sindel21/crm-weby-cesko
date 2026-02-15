@@ -30,12 +30,31 @@ export async function POST(req: Request) {
         // For MVP, we'll process them and return a response, but it might timeout for all 77.
         // We'll return a 202 Accepted and process in a fire-and-forget manner or just first few for demo.
 
+        // Initialize scan status in DB
+        await sql`
+      DELETE FROM scan_status;
+      INSERT INTO scan_status (category, total_towns, is_active)
+      VALUES (${category}, ${CZ_TOWNS.length}, TRUE);
+    `;
+
         // Fire and forget (Next.js serverless functions might kill it, but good for demo)
         (async () => {
+            let leadsTotal = 0;
+            let completed = 0;
+
             for (const city of CZ_TOWNS) {
                 try {
+                    // Update current city
+                    await sql`
+            UPDATE scan_status 
+            SET current_city = ${city}, updated_at = NOW() 
+            WHERE is_active = TRUE
+          `;
+
                     console.log(`Scraping ${category} in ${city}...`);
                     const companies = await runScraper(city, category);
+
+                    leadsTotal += companies.length;
 
                     for (const c of companies) {
                         const { rows } = await sql`
@@ -54,10 +73,23 @@ export async function POST(req: Request) {
               ON CONFLICT (company_id) DO NOTHING
             `;
                     }
+
+                    completed++;
+
+                    // Update progress
+                    await sql`
+            UPDATE scan_status 
+            SET completed_towns = ${completed}, leads_found = ${leadsTotal}, updated_at = NOW() 
+            WHERE is_active = TRUE
+          `;
+
                 } catch (err) {
                     console.error(`Error scraping ${city}:`, err);
                 }
             }
+
+            // Mark as finished
+            await sql`UPDATE scan_status SET is_active = FALSE, updated_at = NOW()`;
         })();
 
         return NextResponse.json({

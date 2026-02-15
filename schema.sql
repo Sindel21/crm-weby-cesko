@@ -70,6 +70,19 @@ CREATE TABLE settings (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Scan Status Table
+CREATE TABLE scan_status (
+    id SERIAL PRIMARY KEY,
+    category TEXT,
+    current_city TEXT,
+    total_towns INTEGER,
+    completed_towns INTEGER DEFAULT 0,
+    leads_found INTEGER DEFAULT 0,
+    is_active BOOLEAN DEFAULT FALSE,
+    started_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Seed initial keys
 INSERT INTO settings (key, value) VALUES 
 ('apify_token', ''),
