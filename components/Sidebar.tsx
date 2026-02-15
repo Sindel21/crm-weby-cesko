@@ -1,5 +1,8 @@
+'use client';
+
 import Link from 'next/link';
 import { LayoutDashboard, Users, Settings, LogOut } from 'lucide-react';
+import { GlobalScanStatus } from './GlobalScanStatus';
 
 const Sidebar = () => {
     return (
@@ -19,6 +22,8 @@ const Sidebar = () => {
                     <span>Leads</span>
                 </Link>
             </nav>
+
+            <GlobalScanStatus />
 
             <div className="mt-auto space-y-1">
                 <Link href="/settings" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-zinc-800 hover:text-white transition-colors">
