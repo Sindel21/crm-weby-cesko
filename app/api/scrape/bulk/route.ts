@@ -31,11 +31,11 @@ export async function POST(req: Request) {
         // We'll return a 202 Accepted and process in a fire-and-forget manner or just first few for demo.
 
         // Initialize scan status in DB
+        await sql`DELETE FROM scan_status`;
         await sql`
-      DELETE FROM scan_status;
-      INSERT INTO scan_status (category, total_towns, is_active)
-      VALUES (${category}, ${CZ_TOWNS.length}, TRUE);
-    `;
+            INSERT INTO scan_status (category, total_towns, is_active)
+            VALUES (${category}, ${CZ_TOWNS.length}, TRUE)
+        `;
 
         // Fire and forget (Next.js serverless functions might kill it, but good for demo)
         (async () => {
