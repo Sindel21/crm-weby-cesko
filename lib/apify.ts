@@ -24,26 +24,33 @@ export const runScraper = async (city: string, category: string): Promise<ApifyC
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-            searchStrings: [`${category} in ${city}, Czech Republic`],
+            searchStrings: [`${category} ${city}`],
             maxCrawledPlacesPerSearch: 10,
+            language: 'cs',
+            countryCode: 'CZ'
         })
     });
 
     const run = await response.json();
-    console.log('Apify Run Response:', JSON.stringify(run));
+    console.log(`Apify Run (${city}) Status:`, run.status || run.data?.status);
 
-    // Fix: Apify returns data directly on the run object for this endpoint
     const datasetId = run.defaultDatasetId || run.data?.defaultDatasetId;
 
-    if (!response.ok || !datasetId) {
-        throw new Error(`Apify run failed: ${run.error?.message || response.statusText || 'Missing datasetId'}`);
+    if (!datasetId) {
+        console.error('Apify failed to provide datasetId. Response:', JSON.stringify(run));
+        return [];
     }
 
-    // Wait 5 seconds for Apify to start producing results
-    await new Promise(resolve => setTimeout(resolve, 5000));
+    // Give it a moment to sync
+    await new Promise(resolve => setTimeout(resolve, 2000));
 
     const datasetResponse = await fetch(`https://api.apify.com/v2/datasets/${datasetId}/items?token=${token}`);
     const items = await datasetResponse.json();
+
+    console.log(`Dataset for ${city} has ${Array.isArray(items) ? items.length : 'NaN'} items`);
+    if (Array.isArray(items) && items.length > 0) {
+        console.log('First item sample:', JSON.stringify(items[0]).substring(0, 100));
+    }
 
     return items.map((item: any) => ({
         name: item.title || item.name || item.businessName || 'Neznámá firma',
