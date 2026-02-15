@@ -85,24 +85,32 @@ export async function POST(req: Request) {
 
                 } catch (err) {
                     console.error(`Error scraping ${city}:`, err);
+                } finally {
+                    completed++;
+
+                    // Update progress (now happens even if one city fails)
+                    await sql`
+            UPDATE scan_status 
+            SET completed_towns = ${completed}, leads_found = ${leadsTotal}, updated_at = NOW() 
+            WHERE is_active = TRUE
+          `;
                 }
-            }
 
-            // Mark as finished
-            await sql`UPDATE scan_status SET is_active = FALSE, updated_at = NOW()`;
-        })();
+                // Mark as finished
+                await sql`UPDATE scan_status SET is_active = FALSE, updated_at = NOW()`;
+            }) ();
 
-        return NextResponse.json({
-            message: 'National scan started',
-            townCount: CZ_TOWNS.length,
-            estimatedTime: '20-30 minutes'
-        }, { status: 202 });
+            return NextResponse.json({
+                message: 'National scan started',
+                townCount: CZ_TOWNS.length,
+                estimatedTime: '20-30 minutes'
+            }, { status: 202 });
 
-    } catch (error: any) {
-        console.error('Core Bulk Scrape Error:', error);
-        return NextResponse.json({
-            error: error.message,
-            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
-        }, { status: 500 });
+        } catch (error: any) {
+            console.error('Core Bulk Scrape Error:', error);
+            return NextResponse.json({
+                error: error.message,
+                stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+            }, { status: 500 });
+        }
     }
-}

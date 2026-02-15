@@ -31,15 +31,15 @@ export const runScraper = async (city: string, category: string): Promise<ApifyC
     const run = await response.json();
     console.log('Apify Run Response:', JSON.stringify(run));
 
-    if (!response.ok || !run.data) {
-        throw new Error(`Apify run failed: ${run.error?.message || response.statusText}`);
+    // Fix: Apify returns data directly on the run object for this endpoint
+    const datasetId = run.defaultDatasetId || run.data?.defaultDatasetId;
+
+    if (!response.ok || !datasetId) {
+        throw new Error(`Apify run failed: ${run.error?.message || response.statusText || 'Missing datasetId'}`);
     }
 
-    const datasetId = run.data.defaultDatasetId;
-
-    // In a real scenario, we'd wait for completion or use a webhook.
-    // For MVP, we'll assume we can poll or it's fast enough for small sets.
-    // Here we just return empty or mock if not ready.
+    // Wait 5 seconds for Apify to start producing results
+    await new Promise(resolve => setTimeout(resolve, 5000));
 
     const datasetResponse = await fetch(`https://api.apify.com/v2/datasets/${datasetId}/items?token=${token}`);
     const items = await datasetResponse.json();
