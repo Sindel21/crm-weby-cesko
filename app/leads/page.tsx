@@ -61,7 +61,19 @@ const LeadsPage = () => {
                             <tr key={lead.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/30 transition-colors">
                                 <td className="px-6 py-4">
                                     <div>
-                                        <p className="font-semibold text-zinc-900 dark:text-zinc-100">{lead.company}</p>
+                                        {lead.website ? (
+                                            <a
+                                                href={lead.website.startsWith('http') ? lead.website : `https://${lead.website}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="font-semibold text-zinc-900 dark:text-zinc-100 hover:text-blue-600 transition-colors flex items-center gap-1"
+                                            >
+                                                {lead.company}
+                                                <ExternalLink size={12} className="opacity-50" />
+                                            </a>
+                                        ) : (
+                                            <p className="font-semibold text-zinc-900 dark:text-zinc-100">{lead.company}</p>
+                                        )}
                                         <p className="text-sm text-zinc-500">{lead.city}</p>
                                     </div>
                                 </td>
