@@ -69,6 +69,7 @@ export async function POST(req: Request) {
 
                     console.log(`Scraping ${category} in ${city}...`);
                     const companies = await runScraper(city, category);
+                    console.log(`Scraper returned ${companies.length} companies for ${city}`);
 
                     leadsTotal += companies.length;
 
