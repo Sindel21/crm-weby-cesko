@@ -50,7 +50,7 @@ export async function POST(req: Request) {
             is_mobile_friendly BOOLEAN,
             load_time FLOAT,
             uses_ads BOOLEAN,
-            analysis_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+            updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
         )`;
 
         await sql`CREATE TABLE IF NOT EXISTS owners (
@@ -58,7 +58,8 @@ export async function POST(req: Request) {
             company_id UUID REFERENCES companies(id) ON DELETE CASCADE,
             owner_name TEXT,
             confidence FLOAT,
-            source TEXT
+            source TEXT,
+            updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
         )`;
 
         await sql`CREATE TABLE IF NOT EXISTS contacts (
@@ -100,6 +101,8 @@ export async function POST(req: Request) {
 
         // Migration: Ensure new column is_paused exists for previously created tables
         await sql`ALTER TABLE scan_status ADD COLUMN IF NOT EXISTS is_paused BOOLEAN DEFAULT FALSE`;
+        await sql`ALTER TABLE websites ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()`;
+        await sql`ALTER TABLE owners ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()`;
 
         for (const [key, value] of Object.entries(body)) {
             await sql`
