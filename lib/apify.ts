@@ -27,7 +27,7 @@ export const runScraper = async (city: string, category: string): Promise<ApifyC
             searchStrings: [`${category} ${city}`],
             maxCrawledPlacesPerSearch: 10,
             language: 'cs',
-            countryCode: 'CZ'
+            countryCode: 'cz'
         })
     });
 
