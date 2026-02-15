@@ -98,6 +98,9 @@ export async function POST(req: Request) {
             updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
         )`;
 
+        // Migration: Ensure new column is_paused exists for previously created tables
+        await sql`ALTER TABLE scan_status ADD COLUMN IF NOT EXISTS is_paused BOOLEAN DEFAULT FALSE`;
+
         for (const [key, value] of Object.entries(body)) {
             await sql`
         INSERT INTO settings (key, value)
