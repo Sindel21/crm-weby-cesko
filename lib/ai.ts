@@ -1,16 +1,21 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { getSetting } from './db-settings';
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
-const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+const getModel = async () => {
+  const apiKey = await getSetting('gemini_api_key');
+  const genAI = new GoogleGenerativeAI(apiKey);
+  return genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+};
 
 export interface OwnerEnrichment {
-    owner_name: string;
-    confidence: number;
-    source_url: string;
+  owner_name: string;
+  confidence: number;
+  source_url: string;
 }
 
 export const findCompanyOwner = async (companyName: string, city: string, address: string): Promise<OwnerEnrichment> => {
-    const prompt = `
+  const model = await getModel();
+  const prompt = `
     Find the owner or CEO of the following company in the Czech Republic:
     Company: ${companyName}
     City: ${city}
@@ -25,29 +30,30 @@ export const findCompanyOwner = async (companyName: string, city: string, addres
     }
   `;
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
+  const result = await model.generateContent(prompt);
+  const response = await result.response;
+  const text = response.text();
 
-    try {
-        // Basic JSON extraction from markdown if needed
-        const jsonStr = text.match(/\{[\s\S]*\}/)?.[0] || text;
-        return JSON.parse(jsonStr);
-    } catch (e) {
-        console.error('Failed to parse Gemini response', text);
-        return { owner_name: 'Unknown', confidence: 0, source_url: '' };
-    }
+  try {
+    // Basic JSON extraction from markdown if needed
+    const jsonStr = text.match(/\{[\s\S]*\}/)?.[0] || text;
+    return JSON.parse(jsonStr);
+  } catch (e) {
+    console.error('Failed to parse Gemini response', text);
+    return { owner_name: 'Unknown', confidence: 0, source_url: '' };
+  }
 };
 
 export const generateCallOpening = async (companyName: string, issues: string[]): Promise<string> => {
-    const prompt = `
+  const model = await getModel();
+  const prompt = `
     Napiš personalizovaný cold-call opening pro firmu ${companyName}.
     Důvody oslovení: ${issues.join(', ')}.
     Buď krátký, lidský, neprodejní. Max 3 věty.
     Jazyk: čeština.
   `;
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    return response.text().trim();
+  const result = await model.generateContent(prompt);
+  const response = await result.response;
+  return response.text().trim();
 };

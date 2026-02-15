@@ -1,3 +1,5 @@
+import { getSetting } from './db-settings';
+
 export interface ApifyCompany {
     name: string;
     category: string;
@@ -9,7 +11,7 @@ export interface ApifyCompany {
 }
 
 export const runScraper = async (city: string, category: string): Promise<ApifyCompany[]> => {
-    const token = process.env.APIFY_TOKEN;
+    const token = await getSetting('apify_token');
     // This is a placeholder for actual Apify Actor call
     // Example: apify/google-maps-scraper
 

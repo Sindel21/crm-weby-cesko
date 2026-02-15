@@ -62,3 +62,19 @@ CREATE TABLE leads (
     notes TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- Settings Table
+CREATE TABLE settings (
+    key TEXT PRIMARY KEY,
+    value TEXT,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Seed initial keys
+INSERT INTO settings (key, value) VALUES 
+('apify_token', ''),
+('gemini_api_key', ''),
+('pagespeed_api_key', ''),
+('upstash_redis_url', ''),
+('upstash_redis_token', '')
+ON CONFLICT (key) DO NOTHING;

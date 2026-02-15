@@ -1,3 +1,5 @@
+import { getSetting } from './db-settings';
+
 const PAGESPEED_API_URL = 'https://www.googleapis.com/pagespeedonline/v5/runPagespeed';
 
 export interface PageSpeedResult {
@@ -8,7 +10,7 @@ export interface PageSpeedResult {
 }
 
 export const analyzeWebsite = async (url: URL): Promise<PageSpeedResult> => {
-    const apiKey = process.env.PAGESPEED_API_KEY;
+    const apiKey = await getSetting('pagespeed_api_key');
 
     const fetchScore = async (strategy: 'mobile' | 'desktop') => {
         const response = await fetch(
