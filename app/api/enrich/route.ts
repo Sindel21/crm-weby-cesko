@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { findCompanyOwner } from '@/lib/ai';
-import { supabaseAdmin } from '@/lib/supabase';
+import { sql } from '@vercel/postgres';
 
 export async function POST(req: Request) {
     try {
@@ -12,21 +12,12 @@ export async function POST(req: Request) {
 
         const enrichment = await findCompanyOwner(name, city, address);
 
-        const { data, error } = await supabaseAdmin
-            .from('owners')
-            .insert({
-                company_id: companyId,
-                owner_name: enrichment.owner_name,
-                confidence: enrichment.confidence,
-                source: enrichment.source_url,
-            })
-            .select();
+        await sql`
+      INSERT INTO owners (company_id, owner_name, confidence, source)
+      VALUES (${companyId}, ${enrichment.owner_name}, ${enrichment.confidence}, ${enrichment.source_url})
+    `;
 
-        if (error) {
-            return NextResponse.json({ error: error.message }, { status: 500 });
-        }
-
-        return NextResponse.json({ message: 'Enrichment complete', data });
+        return NextResponse.json({ message: 'Enrichment complete' });
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }

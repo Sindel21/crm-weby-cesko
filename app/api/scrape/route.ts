@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { runScraper } from '@/lib/apify';
-import { supabaseAdmin } from '@/lib/supabase';
+import { sql } from '@vercel/postgres';
 
 export async function POST(req: Request) {
     try {
@@ -13,24 +13,15 @@ export async function POST(req: Request) {
         const companies = await runScraper(city, category);
 
         // Save to database
-        const { data, error } = await supabaseAdmin
-            .from('companies')
-            .insert(companies.map(c => ({
-                name: c.name,
-                category: c.category,
-                city: c.city,
-                address: c.address,
-                website: c.website,
-                rating: c.rating,
-                reviews: c.reviews
-            })))
-            .select();
-
-        if (error) {
-            return NextResponse.json({ error: error.message }, { status: 500 });
+        for (const c of companies) {
+            await sql`
+        INSERT INTO companies (name, category, city, address, website, rating, reviews)
+        VALUES (${c.name}, ${c.category}, ${c.city}, ${c.address}, ${c.website}, ${c.rating}, ${c.reviews})
+        ON CONFLICT (name, address) DO NOTHING
+      `;
         }
 
-        return NextResponse.json({ message: `Scraped ${companies.length} companies`, data });
+        return NextResponse.json({ message: `Scraped ${companies.length} companies` });
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }

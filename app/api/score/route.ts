@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { calculateLeadScore } from '@/lib/scoring';
-import { supabaseAdmin } from '@/lib/supabase';
+import { sql } from '@vercel/postgres';
 
 export async function POST(req: Request) {
     try {
@@ -11,13 +11,12 @@ export async function POST(req: Request) {
         }
 
         // Fetch website analysis
-        const { data: websiteData, error: websiteError } = await supabaseAdmin
-            .from('websites')
-            .select('*')
-            .eq('company_id', companyId)
-            .single();
+        const { rows: websiteRows } = await sql`
+      SELECT * FROM websites WHERE company_id = ${companyId} LIMIT 1
+    `;
+        const websiteData = websiteRows[0];
 
-        if (websiteError || !websiteData) {
+        if (!websiteData) {
             return NextResponse.json({ error: 'Website analysis not found' }, { status: 404 });
         }
 
@@ -26,25 +25,17 @@ export async function POST(req: Request) {
             pagespeed_desktop: websiteData.pagespeed_desktop,
             has_ssl: websiteData.has_ssl,
             uses_ads: websiteData.uses_ads,
-            is_modern: false, // Default for MVP or add logic
+            is_modern: false,
         });
 
-        // Create lead if it's a call lead (or update existing)
         if (isCallLead) {
-            const { data, error } = await supabaseAdmin
-                .from('leads')
-                .upsert({
-                    company_id: companyId,
-                    score: score,
-                    status: 'new',
-                })
-                .select();
+            await sql`
+        INSERT INTO leads (company_id, score, status)
+        VALUES (${companyId}, ${score}, 'new')
+        ON CONFLICT (company_id) DO UPDATE SET score = EXCLUDED.score
+      `;
 
-            if (error) {
-                return NextResponse.json({ error: error.message }, { status: 500 });
-            }
-
-            return NextResponse.json({ message: 'Lead created/updated', data });
+            return NextResponse.json({ message: 'Lead created/updated', score });
         }
 
         return NextResponse.json({ message: 'Not a lead', score });

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { analyzeWebsite } from '@/lib/pagespeed';
-import { supabaseAdmin } from '@/lib/supabase';
+import { sql } from '@vercel/postgres';
 
 export async function POST(req: Request) {
     try {
@@ -15,7 +15,7 @@ export async function POST(req: Request) {
         // Check for SSL (simple fetch check)
         let hasSsl = false;
         try {
-            const sslCheck = await fetch(websiteUrl.replace('http:', 'https:'), { method: 'HEAD', timeout: 5000 } as any);
+            const sslCheck = await fetch(websiteUrl.replace('http:', 'https:'), { method: 'HEAD' });
             hasSsl = sslCheck.ok;
         } catch (e) {
             hasSsl = false;
@@ -27,24 +27,12 @@ export async function POST(req: Request) {
             pageHtml.includes(term)
         );
 
-        const { data, error } = await supabaseAdmin
-            .from('websites')
-            .insert({
-                company_id: companyId,
-                pagespeed_mobile: analysis.mobileScore,
-                pagespeed_desktop: analysis.desktopScore,
-                load_time: analysis.loadTime,
-                is_mobile_friendly: analysis.isMobileFriendly,
-                has_ssl: hasSsl,
-                uses_ads: usesAds,
-            })
-            .select();
+        await sql`
+      INSERT INTO websites (company_id, pagespeed_mobile, pagespeed_desktop, load_time, is_mobile_friendly, has_ssl, uses_ads)
+      VALUES (${companyId}, ${analysis.mobileScore}, ${analysis.desktopScore}, ${analysis.loadTime}, ${analysis.isMobileFriendly}, ${hasSsl}, ${usesAds})
+    `;
 
-        if (error) {
-            return NextResponse.json({ error: error.message }, { status: 500 });
-        }
-
-        return NextResponse.json({ message: 'Analysis complete', data });
+        return NextResponse.json({ message: 'Analysis complete' });
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
