@@ -19,14 +19,63 @@ export async function POST(req: Request) {
     try {
         const body = await req.json();
 
-        // Ensure table exists
-        await sql`
-      CREATE TABLE IF NOT EXISTS settings (
-        key TEXT PRIMARY KEY,
-        value TEXT,
-        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-      )
-    `;
+        // Ensure all tables exist
+        await sql`CREATE TABLE IF NOT EXISTS companies (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            name TEXT NOT NULL,
+            category TEXT,
+            city TEXT,
+            address TEXT,
+            website TEXT,
+            rating FLOAT,
+            reviews INTEGER,
+            scraped_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+            UNIQUE(name, address)
+        )`;
+
+        await sql`CREATE TABLE IF NOT EXISTS websites (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            company_id UUID REFERENCES companies(id) ON DELETE CASCADE,
+            pagespeed_mobile INTEGER,
+            pagespeed_desktop INTEGER,
+            has_ssl BOOLEAN,
+            is_mobile_friendly BOOLEAN,
+            load_time FLOAT,
+            uses_ads BOOLEAN,
+            analysis_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+        )`;
+
+        await sql`CREATE TABLE IF NOT EXISTS owners (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            company_id UUID REFERENCES companies(id) ON DELETE CASCADE,
+            owner_name TEXT,
+            confidence FLOAT,
+            source TEXT
+        )`;
+
+        await sql`CREATE TABLE IF NOT EXISTS contacts (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            company_id UUID REFERENCES companies(id) ON DELETE CASCADE,
+            phone TEXT,
+            email TEXT,
+            validated BOOLEAN DEFAULT FALSE
+        )`;
+
+        await sql`CREATE TABLE IF NOT EXISTS leads (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            company_id UUID REFERENCES companies(id) ON DELETE CASCADE UNIQUE,
+            score INTEGER,
+            status TEXT CHECK (status IN ('new', 'called', 'interested', 'not_interested', 'closed')) DEFAULT 'new',
+            assigned_to UUID REFERENCES users(id) ON DELETE SET NULL,
+            notes TEXT,
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+        )`;
+
+        await sql`CREATE TABLE IF NOT EXISTS settings (
+            key TEXT PRIMARY KEY,
+            value TEXT,
+            updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+        )`;
 
         for (const [key, value] of Object.entries(body)) {
             await sql`

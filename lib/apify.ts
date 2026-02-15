@@ -12,6 +12,10 @@ export interface ApifyCompany {
 
 export const runScraper = async (city: string, category: string): Promise<ApifyCompany[]> => {
     const token = await getSetting('apify_token');
+
+    if (!token) {
+        throw new Error('Apify API token is not set. Please go to Settings and add your token.');
+    }
     // This is a placeholder for actual Apify Actor call
     // Example: apify/google-maps-scraper
 
@@ -20,11 +24,17 @@ export const runScraper = async (city: string, category: string): Promise<ApifyC
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             searchQueries: [`${category} in ${city}, Czech Republic`],
-            maxResults: 10, // MVP limit
+            maxResults: 10,
         })
     });
 
     const run = await response.json();
+    console.log('Apify Run Response:', JSON.stringify(run));
+
+    if (!response.ok || !run.data) {
+        throw new Error(`Apify run failed: ${run.error?.message || response.statusText}`);
+    }
+
     const datasetId = run.data.defaultDatasetId;
 
     // In a real scenario, we'd wait for completion or use a webhook.
