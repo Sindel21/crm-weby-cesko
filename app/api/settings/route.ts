@@ -20,6 +20,14 @@ export async function POST(req: Request) {
         const body = await req.json();
 
         // Ensure all tables exist
+        await sql`CREATE TABLE IF NOT EXISTS users (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            email TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            role TEXT CHECK (role IN ('admin', 'sales')) DEFAULT 'sales',
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+        )`;
+
         await sql`CREATE TABLE IF NOT EXISTS companies (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             name TEXT NOT NULL,
