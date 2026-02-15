@@ -104,6 +104,10 @@ export async function POST(req: Request) {
         await sql`ALTER TABLE websites ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()`;
         await sql`ALTER TABLE owners ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()`;
 
+        // Migration: Add UNIQUE constraints if they don't exist (using nested block to avoid stopping on error)
+        try { await sql`ALTER TABLE websites ADD CONSTRAINT websites_company_id_key UNIQUE (company_id)`; } catch (e) { }
+        try { await sql`ALTER TABLE owners ADD CONSTRAINT owners_company_id_key UNIQUE (company_id)`; } catch (e) { }
+
         for (const [key, value] of Object.entries(body)) {
             await sql`
         INSERT INTO settings (key, value)
