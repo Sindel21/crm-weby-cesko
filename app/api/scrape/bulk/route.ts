@@ -6,7 +6,10 @@ import { calculateLeadScore } from '@/lib/scoring';
 import { sql } from '@vercel/postgres';
 
 const CZ_TOWNS = [
-    'Praha', 'Benešov', 'Beroun', 'Kladno', 'Kolín', 'Kutná Hora', 'Mělník', 'Mladá Boleslav', 'Nymburk', 'Příbram', 'Rakovník',
+    'Praha 1', 'Praha 2', 'Praha 3', 'Praha 4', 'Praha 5', 'Praha 6', 'Praha 7', 'Praha 8', 'Praha 9', 'Praha 10',
+    'Praha 11', 'Praha 12', 'Praha 13', 'Praha 14', 'Praha 15', 'Praha 16', 'Praha 17', 'Praha 18', 'Praha 19', 'Praha 20',
+    'Praha 21', 'Praha 22',
+    'Benešov', 'Beroun', 'Kladno', 'Kolín', 'Kutná Hora', 'Mělník', 'Mladá Boleslav', 'Nymburk', 'Příbram', 'Rakovník',
     'České Budějovice', 'Český Krumlov', 'Jindřichův Hradec', 'Písek', 'Prachatice', 'Strakonice', 'Tábor',
     'Domažlice', 'Klatovy', 'Plzeň', 'Rokycany', 'Tachov',
     'Cheb', 'Karlovy Vary', 'Sokolov',
