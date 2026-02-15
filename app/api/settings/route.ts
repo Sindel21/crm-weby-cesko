@@ -19,6 +19,15 @@ export async function POST(req: Request) {
     try {
         const body = await req.json();
 
+        // Ensure table exists
+        await sql`
+      CREATE TABLE IF NOT EXISTS settings (
+        key TEXT PRIMARY KEY,
+        value TEXT,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      )
+    `;
+
         for (const [key, value] of Object.entries(body)) {
             await sql`
         INSERT INTO settings (key, value)
@@ -29,6 +38,8 @@ export async function POST(req: Request) {
 
         return NextResponse.json({ message: 'Settings updated' });
     } catch (error: any) {
+        console.error('Settings save error:', error);
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }
+```
