@@ -79,9 +79,14 @@ const LeadsPage = () => {
                                 </td>
                                 <td className="px-6 py-4">
                                     <div className="flex flex-col gap-1">
-                                        <span className={`text-xs px-2 py-0.5 rounded-full w-fit font-medium ${lead.mobileSpeed < 50 ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : 'bg-green-100 text-green-700'}`}>
+                                        <span className={`text-xs px-2 py-0.5 rounded-full w-fit font-medium ${lead.mobileSpeed < 50 ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : lead.mobileSpeed < 90 ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' : 'bg-green-100 text-green-700'}`}>
                                             Speed: {lead.mobileSpeed}
                                         </span>
+                                        {lead.loadTime && (
+                                            <span className="text-[10px] text-zinc-500 font-medium px-2">
+                                                Load: {lead.loadTime.toFixed(1)}s
+                                            </span>
+                                        )}
                                         {lead.ads && (
                                             <span className="text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 px-2 py-0.5 rounded-full w-fit font-medium">
                                                 Google Ads
@@ -91,7 +96,7 @@ const LeadsPage = () => {
                                 </td>
                                 <td className="px-6 py-4">
                                     <div className="flex items-center gap-2">
-                                        <div className="w-10 h-10 border-2 border-blue-500 rounded-full flex items-center justify-center text-sm font-bold text-blue-500">
+                                        <div className={`w-10 h-10 border-2 rounded-full flex items-center justify-center text-sm font-bold ${lead.score < 50 ? 'border-red-500 text-red-500' : lead.score < 90 ? 'border-orange-500 text-orange-500' : 'border-green-500 text-green-500'}`}>
                                             {lead.score}
                                         </div>
                                     </div>

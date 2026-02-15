@@ -125,15 +125,16 @@ export async function POST(req: Request) {
                                 }
 
                                 // Calculate and Update Score
-                                const score = calculateLeadScore({
-                                    mobileSpeed: analysis.mobileScore,
-                                    desktopSpeed: analysis.desktopScore,
-                                    hasAds: false // We could add ad detection later
+                                const scoringResult = calculateLeadScore({
+                                    pagespeed_mobile: analysis.mobileScore,
+                                    pagespeed_desktop: analysis.desktopScore,
+                                    has_ssl: true,
+                                    uses_ads: false
                                 });
 
                                 await sql`
                                     UPDATE leads 
-                                    SET score = ${score} 
+                                    SET score = ${scoringResult.score} 
                                     WHERE company_id = ${companyId}
                                 `;
 

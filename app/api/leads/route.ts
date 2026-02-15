@@ -12,6 +12,7 @@ export async function GET() {
         c.city,
         c.website,
         w.pagespeed_mobile as "mobileSpeed",
+        w.load_time as "loadTime",
         w.uses_ads as ads,
         o.owner_name as owner,
         con.phone
