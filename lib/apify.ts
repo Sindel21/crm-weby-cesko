@@ -19,7 +19,8 @@ export const runScraper = async (city: string, category: string): Promise<ApifyC
     // This is a placeholder for actual Apify Actor call
     // Example: apify/google-maps-scraper
 
-    const response = await fetch(`https://api.apify.com/v2/acts/compass~google-maps-scraper/runs?token=${token}&waitForFinish=60`, {
+    // Using the definitive alphanumeric ID for the official Google Maps Scraper
+    const response = await fetch(`https://api.apify.com/v2/acts/nwua9Gu5YrADL7ZDj/runs?token=${token}&waitForFinish=60`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
