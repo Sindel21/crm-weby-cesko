@@ -24,7 +24,8 @@ export const runScraper = async (city: string, category: string): Promise<ApifyC
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-            searchStrings: [`${category} ${city}`],
+            searchStringsArray: [category],
+            locationQuery: city,
             maxCrawledPlacesPerSearch: 10,
             language: 'cs',
             countryCode: 'cz'
