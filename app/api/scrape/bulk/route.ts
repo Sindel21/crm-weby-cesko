@@ -38,10 +38,20 @@ export async function POST(req: Request) {
                     const companies = await runScraper(city, category);
 
                     for (const c of companies) {
-                        await sql`
+                        const { rows } = await sql`
               INSERT INTO companies (name, category, city, address, website, rating, reviews)
               VALUES (${c.name}, ${c.category}, ${c.city}, ${c.address}, ${c.website}, ${c.rating}, ${c.reviews})
-              ON CONFLICT (name, address) DO NOTHING
+              ON CONFLICT (name, address) 
+              DO UPDATE SET name = EXCLUDED.name 
+              RETURNING id
+            `;
+
+                        const companyId = rows[0].id;
+
+                        await sql`
+              INSERT INTO leads (company_id, status)
+              VALUES (${companyId}, 'new')
+              ON CONFLICT (company_id) DO NOTHING
             `;
                     }
                 } catch (err) {
