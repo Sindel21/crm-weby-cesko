@@ -46,12 +46,12 @@ export const runScraper = async (city: string, category: string): Promise<ApifyC
     const items = await datasetResponse.json();
 
     return items.map((item: any) => ({
-        name: item.title,
-        category: item.categoryName,
-        city: item.city,
-        address: item.address,
-        website: item.website,
-        rating: item.reviewsScore,
-        reviews: item.reviewsCount,
+        name: item.title || item.name || item.businessName || 'Neznámá firma',
+        category: item.categoryName || item.category || item.types?.[0] || 'Ostatní',
+        city: item.city || city,
+        address: item.address || item.fullAddress || item.full_address || '---',
+        website: item.website || item.url || '',
+        rating: item.reviewsScore || item.rating || item.totalScore || 0,
+        reviews: item.reviewsCount || item.reviewsCount || item.review_count || 0,
     }));
 };

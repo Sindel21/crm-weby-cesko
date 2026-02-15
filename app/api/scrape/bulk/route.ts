@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
 import { runScraper } from '@/lib/apify';
+import { analyzeWebsite } from '@/lib/pagespeed';
+import { findCompanyOwner } from '@/lib/ai';
+import { calculateLeadScore } from '@/lib/scoring';
 import { sql } from '@vercel/postgres';
 
 const CZ_TOWNS = [
@@ -84,11 +87,60 @@ export async function POST(req: Request) {
 
                         const companyId = rows[0].id;
 
+                        // Insert Lead
                         await sql`
                             INSERT INTO leads (company_id, status)
                             VALUES (${companyId}, 'new')
                             ON CONFLICT (company_id) DO NOTHING
                         `;
+
+                        // NEW: Automated Analysis & Enrichment
+                        // We do this inside the background block
+                        if (c.website) {
+                            try {
+                                console.log(`Analyzing ${c.website} for ${c.name}...`);
+                                const url = new URL(c.website.startsWith('http') ? c.website : `https://${c.website}`);
+                                const analysis = await analyzeWebsite(url);
+
+                                await sql`
+                                    INSERT INTO websites (company_id, pagespeed_mobile, pagespeed_desktop, is_mobile_friendly, load_time)
+                                    VALUES (${companyId}, ${analysis.mobileScore}, ${analysis.desktopScore}, ${analysis.isMobileFriendly}, ${analysis.loadTime})
+                                    ON CONFLICT (company_id) DO UPDATE SET 
+                                        pagespeed_mobile = EXCLUDED.pagespeed_mobile,
+                                        pagespeed_desktop = EXCLUDED.pagespeed_desktop,
+                                        is_mobile_friendly = EXCLUDED.is_mobile_friendly,
+                                        updated_at = NOW()
+                                `;
+
+                                // Find Owner with AI
+                                const owner = await findCompanyOwner(c.name, c.city, c.address);
+                                if (owner) {
+                                    await sql`
+                                        INSERT INTO owners (company_id, owner_name, confidence, source)
+                                        VALUES (${companyId}, ${owner.owner_name}, ${owner.confidence}, ${owner.source_url})
+                                        ON CONFLICT (company_id) DO UPDATE SET 
+                                            owner_name = EXCLUDED.owner_name,
+                                            confidence = EXCLUDED.confidence
+                                    `;
+                                }
+
+                                // Calculate and Update Score
+                                const score = calculateLeadScore({
+                                    mobileSpeed: analysis.mobileScore,
+                                    desktopSpeed: analysis.desktopScore,
+                                    hasAds: false // We could add ad detection later
+                                });
+
+                                await sql`
+                                    UPDATE leads 
+                                    SET score = ${score} 
+                                    WHERE company_id = ${companyId}
+                                `;
+
+                            } catch (analysisErr) {
+                                console.error(`Analysis failed for ${c.name}:`, analysisErr);
+                            }
+                        }
                     }
                 } catch (err) {
                     console.error(`Error scraping ${city}:`, err);
