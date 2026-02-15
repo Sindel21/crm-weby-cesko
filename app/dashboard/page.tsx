@@ -1,12 +1,33 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import { TrendingUp, Users, Target, CheckCircle } from 'lucide-react';
 
 const Dashboard = () => {
+    const [statsData, setStatsData] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        fetch('/api/dashboard/stats')
+            .then(res => res.json())
+            .then(data => {
+                setStatsData(data);
+                setLoading(false);
+            })
+            .catch(err => {
+                console.error(err);
+                setLoading(false);
+            });
+    }, []);
+
     const stats = [
-        { label: 'Total Leads', value: '1,284', icon: Users, color: 'text-blue-500', bg: 'bg-blue-50 dark:bg-blue-900/20' },
-        { label: 'New Leads', value: '43', icon: Target, color: 'text-purple-500', bg: 'bg-purple-50 dark:bg-purple-900/20' },
-        { label: 'Calls Today', value: '12', icon: TrendingUp, color: 'text-orange-500', bg: 'bg-orange-50 dark:bg-orange-900/20' },
-        { label: 'Converted', value: '24%', icon: CheckCircle, color: 'text-green-500', bg: 'bg-green-50 dark:bg-green-900/20' },
+        { label: 'Total Leads', value: statsData?.totalLeads || '0', icon: Users, color: 'text-blue-500', bg: 'bg-blue-50 dark:bg-blue-900/20' },
+        { label: 'New Leads', value: statsData?.newLeads || '0', icon: Target, color: 'text-purple-500', bg: 'bg-purple-50 dark:bg-purple-900/20' },
+        { label: 'Calls Today', value: statsData?.callsToday || '0', icon: TrendingUp, color: 'text-orange-500', bg: 'bg-orange-50 dark:bg-orange-900/20' },
+        { label: 'Converted', value: statsData?.successRate || '0%', icon: CheckCircle, color: 'text-green-500', bg: 'bg-green-50 dark:bg-green-900/20' },
     ];
+
+    if (loading) return <div className="p-8 text-center text-zinc-500">Loading dashboard...</div>;
 
     return (
         <div className="space-y-8 p-8 max-w-7xl mx-auto">

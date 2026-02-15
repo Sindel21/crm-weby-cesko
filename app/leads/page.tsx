@@ -1,33 +1,26 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, Filter, Phone, MoreHorizontal, ExternalLink } from 'lucide-react';
 
 const LeadsPage = () => {
-    const [leads] = useState([
-        {
-            id: 1,
-            company: 'Restaurace Pod Lipou',
-            city: 'Praha',
-            score: 85,
-            mobileSpeed: 24,
-            ads: true,
-            phone: '+420 777 123 456',
-            owner: 'Jan Novák',
-            status: 'new'
-        },
-        {
-            id: 2,
-            company: 'Autoservis Král',
-            city: 'Brno',
-            score: 72,
-            mobileSpeed: 38,
-            ads: false,
-            phone: '+420 602 987 654',
-            owner: 'Petr Král',
-            status: 'called'
-        },
-    ]);
+    const [leads, setLeads] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        fetch('/api/leads')
+            .then(res => res.json())
+            .then(data => {
+                if (Array.isArray(data)) setLeads(data);
+                setLoading(false);
+            })
+            .catch(err => {
+                console.error(err);
+                setLoading(false);
+            });
+    }, []);
+
+    if (loading) return <div className="p-8 text-center text-zinc-500">Loading leads...</div>;
 
     return (
         <div className="space-y-8 p-8 max-w-7xl mx-auto">

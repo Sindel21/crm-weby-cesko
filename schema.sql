@@ -17,7 +17,8 @@ CREATE TABLE companies (
     website TEXT,
     rating FLOAT,
     reviews INTEGER,
-    scraped_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    scraped_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(name, address)
 );
 
 -- Websites Table (Analysis)
@@ -54,7 +55,7 @@ CREATE TABLE contacts (
 -- Leads Table
 CREATE TABLE leads (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    company_id UUID REFERENCES companies(id) ON DELETE CASCADE,
+    company_id UUID REFERENCES companies(id) ON DELETE CASCADE UNIQUE,
     score INTEGER,
     status TEXT CHECK (status IN ('new', 'called', 'interested', 'not_interested', 'closed')) DEFAULT 'new',
     assigned_to UUID REFERENCES users(id) ON DELETE SET NULL,

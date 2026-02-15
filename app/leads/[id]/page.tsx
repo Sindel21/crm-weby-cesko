@@ -1,27 +1,34 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ChevronLeft, Globe, Zap, Shield, Megaphone, Phone, MessageSquare, Save } from 'lucide-react';
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
 
-const LeadDetail = ({ params }: { params: { id: string } }) => {
+const LeadDetail = () => {
+    const { id } = useParams();
+    const [lead, setLead] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
     const [status, setStatus] = useState('new');
     const [notes, setNotes] = useState('');
 
-    // Mock data
-    const lead = {
-        name: 'Restaurace Pod Lipou',
-        address: 'Vodičkova 12, Praha 1',
-        website: 'https://restaurace-pod-lipou.cz',
-        owner: 'Jan Novák',
-        phone: '+420 777 123 456',
-        score: 85,
-        mobileSpeed: 24,
-        desktopSpeed: 58,
-        hasSsl: false,
-        usesAds: true,
-        aiPitch: "Dobrý den, pane Nováku. Všiml jsem si, že investujete do reklamy, ale váš mobilní web se načítá pomalu, což vám zbytečně utrácí budget. Rád bych vám ukázal, jak to během týdne opravit."
-    };
+    useEffect(() => {
+        fetch(`/api/leads/${id}`)
+            .then(res => res.json())
+            .then(data => {
+                setLead(data);
+                setStatus(data.status);
+                setNotes(data.notes || '');
+                setLoading(false);
+            })
+            .catch(err => {
+                console.error(err);
+                setLoading(false);
+            });
+    }, [id]);
+
+    if (loading) return <div className="p-8 text-center text-zinc-500">Loading lead details...</div>;
+    if (!lead) return <div className="p-8 text-center text-zinc-500">Lead not found</div>;
 
     return (
         <div className="space-y-8 p-8 max-w-5xl mx-auto">
