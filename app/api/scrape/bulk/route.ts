@@ -44,12 +44,28 @@ export async function POST(req: Request) {
 
             for (const city of CZ_TOWNS) {
                 try {
+                    // Check if still active or paused
+                    const { rows: statusCheck } = await sql`SELECT is_active, is_paused FROM scan_status WHERE is_active = TRUE ORDER BY started_at DESC LIMIT 1`;
+
+                    if (statusCheck.length === 0 || !statusCheck[0].is_active) {
+                        console.log('Scraper stopped by user.');
+                        break;
+                    }
+
+                    while (statusCheck[0].is_paused) {
+                        console.log('Scraper paused. Waiting...');
+                        await new Promise(resolve => setTimeout(resolve, 5000));
+                        const { rows: retryCheck } = await sql`SELECT is_active, is_paused FROM scan_status WHERE id = (SELECT id FROM scan_status ORDER BY started_at DESC LIMIT 1)`;
+                        if (retryCheck.length === 0 || !retryCheck[0].is_active) break;
+                        if (!retryCheck[0].is_paused) break;
+                    }
+
                     // Update current city
                     await sql`
-            UPDATE scan_status 
-            SET current_city = ${city}, updated_at = NOW() 
-            WHERE is_active = TRUE
-          `;
+                        UPDATE scan_status 
+                        SET current_city = ${city}, updated_at = NOW() 
+                        WHERE is_active = TRUE
+                    `;
 
                     console.log(`Scraping ${category} in ${city}...`);
                     const companies = await runScraper(city, category);
@@ -58,59 +74,50 @@ export async function POST(req: Request) {
 
                     for (const c of companies) {
                         const { rows } = await sql`
-              INSERT INTO companies (name, category, city, address, website, rating, reviews)
-              VALUES (${c.name}, ${c.category}, ${c.city}, ${c.address}, ${c.website}, ${c.rating}, ${c.reviews})
-              ON CONFLICT (name, address) 
-              DO UPDATE SET name = EXCLUDED.name 
-              RETURNING id
-            `;
+                            INSERT INTO companies (name, category, city, address, website, rating, reviews)
+                            VALUES (${c.name}, ${c.category}, ${c.city}, ${c.address}, ${c.website}, ${c.rating}, ${c.reviews})
+                            ON CONFLICT (name, address) 
+                            DO UPDATE SET name = EXCLUDED.name 
+                            RETURNING id
+                        `;
 
                         const companyId = rows[0].id;
 
                         await sql`
-              INSERT INTO leads (company_id, status)
-              VALUES (${companyId}, 'new')
-              ON CONFLICT (company_id) DO NOTHING
-            `;
+                            INSERT INTO leads (company_id, status)
+                            VALUES (${companyId}, 'new')
+                            ON CONFLICT (company_id) DO NOTHING
+                        `;
                     }
-
-                    completed++;
-
-                    // Update progress
-                    await sql`
-            UPDATE scan_status 
-            SET completed_towns = ${completed}, leads_found = ${leadsTotal}, updated_at = NOW() 
-            WHERE is_active = TRUE
-          `;
-
                 } catch (err) {
                     console.error(`Error scraping ${city}:`, err);
                 } finally {
                     completed++;
 
-                    // Update progress (now happens even if one city fails)
+                    // Update progress
                     await sql`
-            UPDATE scan_status 
-            SET completed_towns = ${completed}, leads_found = ${leadsTotal}, updated_at = NOW() 
-            WHERE is_active = TRUE
-          `;
+                        UPDATE scan_status 
+                        SET completed_towns = ${completed}, leads_found = ${leadsTotal}, updated_at = NOW() 
+                        WHERE is_active = TRUE
+                    `;
                 }
+            }
 
-                // Mark as finished
-                await sql`UPDATE scan_status SET is_active = FALSE, updated_at = NOW()`;
-            }) ();
+            // Mark as finished if not stopped earlier
+            await sql`UPDATE scan_status SET is_active = FALSE, updated_at = NOW() WHERE is_active = TRUE`;
+        })();
 
-            return NextResponse.json({
-                message: 'National scan started',
-                townCount: CZ_TOWNS.length,
-                estimatedTime: '20-30 minutes'
-            }, { status: 202 });
+        return NextResponse.json({
+            message: 'National scan started',
+            townCount: CZ_TOWNS.length,
+            estimatedTime: '20-30 minutes'
+        }, { status: 202 });
 
-        } catch (error: any) {
-            console.error('Core Bulk Scrape Error:', error);
-            return NextResponse.json({
-                error: error.message,
-                stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
-            }, { status: 500 });
-        }
+    } catch (error: any) {
+        console.error('Core Bulk Scrape Error:', error);
+        return NextResponse.json({
+            error: error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        }, { status: 500 });
     }
+}

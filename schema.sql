@@ -79,6 +79,7 @@ CREATE TABLE scan_status (
     completed_towns INTEGER DEFAULT 0,
     leads_found INTEGER DEFAULT 0,
     is_active BOOLEAN DEFAULT FALSE,
+    is_paused BOOLEAN DEFAULT FALSE,
     started_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
