@@ -24,7 +24,8 @@ export const ScraperControl = () => {
             if (res.ok) {
                 setStatus('Scan started! Results will appear in your leads list shortly.');
             } else {
-                setStatus('Error starting scan.');
+                const data = await res.json();
+                setStatus(`Error starting scan: ${data.error || 'Unknown error'}`);
             }
         } catch (err) {
             setStatus('Network error.');

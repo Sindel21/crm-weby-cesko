@@ -99,6 +99,10 @@ export async function POST(req: Request) {
         }, { status: 202 });
 
     } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        console.error('Core Bulk Scrape Error:', error);
+        return NextResponse.json({
+            error: error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        }, { status: 500 });
     }
 }
