@@ -48,7 +48,7 @@ export const GlobalScanStatus = () => {
         }
     };
 
-    if (!status || (!status.is_active && !status.completed_towns)) return null;
+    if (!status || !status.is_active) return null;
 
     const percentage = Math.round((status.completed_towns / status.total_towns) * 100);
 
