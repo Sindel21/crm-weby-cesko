@@ -6,6 +6,7 @@ export interface ApifyCompany {
     city: string;
     address: string;
     website: string;
+    phone: string;
     rating: number;
     reviews: number;
 }
@@ -59,6 +60,7 @@ export const runScraper = async (city: string, category: string): Promise<ApifyC
         city: item.city || city,
         address: item.address || item.fullAddress || item.full_address || '---',
         website: item.website || item.url || '',
+        phone: item.phone || item.phoneNumber || item.phone_number || '',
         rating: item.reviewsScore || item.rating || item.totalScore || 0,
         reviews: item.reviewsCount || item.reviewsCount || item.review_count || 0,
     }));

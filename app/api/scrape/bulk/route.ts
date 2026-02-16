@@ -97,6 +97,16 @@ export async function POST(req: Request) {
                             ON CONFLICT (company_id) DO NOTHING
                         `;
 
+                        // Insert Contact info if available
+                        if (c.phone) {
+                            await sql`
+                                INSERT INTO contacts (company_id, phone)
+                                VALUES (${companyId}, ${c.phone})
+                                ON CONFLICT (company_id) DO UPDATE SET 
+                                    phone = COALESCE(EXCLUDED.phone, contacts.phone)
+                            `;
+                        }
+
                         // NEW: Automated Analysis & Enrichment
                         // We do this inside the background block
                         if (c.website) {
