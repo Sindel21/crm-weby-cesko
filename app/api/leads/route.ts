@@ -3,6 +3,16 @@ import { sql } from '@vercel/postgres';
 
 export async function GET() {
   try {
+    // Auto-migration: Ensure new columns exist before querying
+    try {
+      await sql`ALTER TABLE companies ADD COLUMN IF NOT EXISTS ico VARCHAR(20)`;
+      await sql`ALTER TABLE owners ADD COLUMN IF NOT EXISTS source TEXT`;
+      await sql`ALTER TABLE websites ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()`;
+      await sql`ALTER TABLE owners ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()`;
+    } catch (migErr) {
+      console.error('Migration error in /api/leads:', migErr);
+    }
+
     const { rows } = await sql`
       SELECT 
         l.id,
