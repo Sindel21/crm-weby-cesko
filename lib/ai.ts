@@ -11,12 +11,13 @@ const getModel = async () => {
         // @ts-ignore
         googleSearchRetrieval: {
           dynamicRetrievalConfig: {
-            mode: "DYNAMIC",
+            // @ts-ignore
+            mode: 'MODE_DYNAMIC',
             dynamicThreshold: 0.3,
           },
         },
       },
-    ],
+    ] as any,
   });
 };
 
