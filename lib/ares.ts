@@ -20,7 +20,7 @@ export const searchAresByName = async (name: string): Promise<AresCompany | null
     try {
         // Prepare name for URL (encode)
         const encodedName = encodeURIComponent(name);
-        console.log(`Searching ARES (GET) for: ${name}`);
+        console.log(`[ARES v1.1] Searching (GET) for: ${name}`);
 
         const response = await fetch(`${ARES_API_BASE}/ekonomicke-subjekty?obchodniJmeno=${encodedName}&pocet=1`, {
             headers: {
@@ -31,7 +31,7 @@ export const searchAresByName = async (name: string): Promise<AresCompany | null
 
         if (!response.ok) {
             const errText = await response.text();
-            console.error(`ARES search failed (${response.status}):`, errText.substring(0, 500));
+            console.error(`[ARES v1.1] search failed (${response.status}):`, errText.substring(0, 500));
             return null;
         }
 
@@ -56,7 +56,7 @@ export const searchAresByName = async (name: string): Promise<AresCompany | null
 
 export const getAresRepresentatives = async (ico: string): Promise<string[]> => {
     try {
-        console.log(`Fetching representatives for IČO: ${ico}`);
+        console.log(`[ARES v1.1] Fetching representatives for IČO: ${ico}`);
         const response = await fetch(`${ARES_API_BASE}/ekonomicke-subjekty-vr/${ico}`, {
             headers: {
                 'Accept': 'application/json',

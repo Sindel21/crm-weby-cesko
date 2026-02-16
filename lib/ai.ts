@@ -5,6 +5,7 @@ const getModel = async () => {
   const apiKey = await getSetting('gemini_api_key');
   const genAI = new GoogleGenerativeAI(apiKey);
   // Using the standard identifier which is most widely available
+  console.log('[AI v1.1] Getting model gemini-1.5-flash');
   return genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 };
 
@@ -43,8 +44,8 @@ export const findCompanyOwner = async (companyName: string, city: string, addres
   try {
     const jsonStr = text.match(/\{[\s\S]*\}/)?.[0] || text;
     return JSON.parse(jsonStr);
-  } catch (e) {
-    console.error('Failed to parse Gemini response for owner', text);
+  } catch (e: any) {
+    console.error('[AI v1.1] Failed to parse Gemini response for owner', e.message);
     return { owner_name: 'Unknown', confidence: 0, source_url: '' };
   }
 };
