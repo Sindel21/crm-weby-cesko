@@ -13,6 +13,11 @@ export interface OwnerEnrichment {
   source_url: string;
 }
 
+export interface CompanyLeadDetails extends OwnerEnrichment {
+  phone?: string;
+  email?: string;
+}
+
 export const findCompanyOwner = async (companyName: string, city: string, address: string): Promise<OwnerEnrichment> => {
   const model = await getModel();
   const prompt = `
@@ -35,12 +40,36 @@ export const findCompanyOwner = async (companyName: string, city: string, addres
   const text = response.text();
 
   try {
-    // Basic JSON extraction from markdown if needed
     const jsonStr = text.match(/\{[\s\S]*\}/)?.[0] || text;
     return JSON.parse(jsonStr);
   } catch (e) {
-    console.error('Failed to parse Gemini response', text);
+    console.error('Failed to parse Gemini response for owner', text);
     return { owner_name: 'Unknown', confidence: 0, source_url: '' };
+  }
+};
+
+export const findCompanyContacts = async (companyName: string, website: string): Promise<{ phone?: string, email?: string }> => {
+  if (!website) return {};
+  const model = await getModel();
+  const prompt = `
+    Look at the company name: ${companyName} and website: ${website}.
+    Find the official contact phone number and email address for this business.
+    Return ONLY a JSON object:
+    {
+      "phone": "+420123456789",
+      "email": "info@company.cz"
+    }
+  `;
+
+  try {
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
+    const jsonStr = text.match(/\{[\s\S]*\}/)?.[0] || text;
+    return JSON.parse(jsonStr);
+  } catch (e) {
+    console.error('Failed to parse Gemini response for contacts', website);
+    return {};
   }
 };
 
