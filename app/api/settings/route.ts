@@ -41,6 +41,9 @@ export async function POST(req: Request) {
             UNIQUE(name, address)
         )`;
 
+        // Migration: Add ico column to companies
+        await sql`ALTER TABLE companies ADD COLUMN IF NOT EXISTS ico VARCHAR(20)`;
+
         await sql`CREATE TABLE IF NOT EXISTS websites (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             company_id UUID REFERENCES companies(id) ON DELETE CASCADE,

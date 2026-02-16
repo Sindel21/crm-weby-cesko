@@ -4,6 +4,8 @@ import { analyzeWebsite } from '@/lib/pagespeed';
 import { findCompanyOwner, findCompanyContacts } from '@/lib/ai';
 import { calculateLeadScore } from '@/lib/scoring';
 
+import { searchAresByName, getAresRepresentatives } from '@/lib/ares';
+
 export async function POST(req: Request) {
     try {
         const { leadId } = await req.json();
@@ -14,7 +16,7 @@ export async function POST(req: Request) {
 
         // Fetch lead and company info
         const { rows: leads } = await sql`
-            SELECT l.id, c.id as company_id, c.name, c.city, c.address, c.website 
+            SELECT l.id, c.id as company_id, c.name, c.city, c.address, c.website, c.ico 
             FROM leads l 
             JOIN companies c ON l.company_id = c.id 
             WHERE l.id = ${leadId}
@@ -28,8 +30,23 @@ export async function POST(req: Request) {
         let mobileScore = 0;
         let desktopScore = 0;
         let loadTime = 0;
+        let currentIco = lead.ico;
+        let representatives: string[] = [];
 
-        // 1. PageSpeed Analysis
+        // 1. ARES Lookup (Find IČO and Representative)
+        if (!currentIco) {
+            const aresCompany = await searchAresByName(lead.name);
+            if (aresCompany) {
+                currentIco = aresCompany.ico;
+                await sql`UPDATE companies SET ico = ${currentIco} WHERE id = ${lead.company_id}`;
+            }
+        }
+
+        if (currentIco) {
+            representatives = await getAresRepresentatives(currentIco);
+        }
+
+        // 2. PageSpeed Analysis
         if (lead.website) {
             try {
                 const url = new URL(lead.website.startsWith('http') ? lead.website : `https://${lead.website}`);
@@ -53,13 +70,18 @@ export async function POST(req: Request) {
             }
         }
 
-        // 2. AI Owner Enrichment
+        // 3. AI Owner Enrichment (Using ARES names as baseline)
         try {
+            const representativeHint = representatives.length > 0 ? `Probable owner from ARES: ${representatives.join(', ')}` : '';
             const owner = await findCompanyOwner(lead.name, lead.city, lead.address);
-            if (owner && owner.owner_name !== 'Unknown') {
+
+            // Prefer ARES representative if AI consensus is low or missing
+            const finalOwnerName = (owner.confidence > 0.7) ? owner.owner_name : (representatives[0] || owner.owner_name);
+
+            if (finalOwnerName && finalOwnerName !== 'Unknown') {
                 await sql`
                     INSERT INTO owners (company_id, owner_name, confidence, source)
-                    VALUES (${lead.company_id}, ${owner.owner_name}, ${owner.confidence}, ${owner.source_url})
+                    VALUES (${lead.company_id}, ${finalOwnerName}, ${representatives.length > 0 ? 0.95 : owner.confidence}, ${representatives.length > 0 ? 'ARES' : owner.source_url})
                     ON CONFLICT (company_id) DO UPDATE SET 
                         owner_name = EXCLUDED.owner_name,
                         confidence = EXCLUDED.confidence,
@@ -70,10 +92,11 @@ export async function POST(req: Request) {
             console.error(`AI Owner enrichment failed for ${lead.name}:`, err);
         }
 
-        // 3. AI Contact Enrichment (Phone/Email)
-        if (lead.website) {
+        // 4. AI Contact Enrichment (Phone/Email) - Grounded with owner name
+        if (lead.website || representatives.length > 0) {
             try {
-                const contacts = await findCompanyContacts(lead.name, lead.website);
+                const ownerName = representatives[0] || 'the owner';
+                const contacts = await findCompanyContacts(lead.name, lead.website || '', ownerName);
                 if (contacts.phone || contacts.email) {
                     await sql`
                         INSERT INTO contacts (company_id, phone, email)

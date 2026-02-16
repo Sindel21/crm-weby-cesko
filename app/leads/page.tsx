@@ -119,7 +119,10 @@ const LeadsPage = () => {
                                         ) : (
                                             <p className="font-semibold text-zinc-900 dark:text-zinc-100">{lead.company}</p>
                                         )}
-                                        <p className="text-sm text-zinc-500">{lead.city}</p>
+                                        <p className="text-sm text-zinc-500 flex items-center gap-2">
+                                            {lead.city}
+                                            {lead.ico && <span className="text-[10px] bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded text-zinc-400 font-mono">IČO: {lead.ico}</span>}
+                                        </p>
                                     </div>
                                 </td>
                                 <td className="px-6 py-4">
@@ -151,7 +154,12 @@ const LeadsPage = () => {
                                 </td>
                                 <td className="px-6 py-4">
                                     <div className="text-sm">
-                                        <p className="font-medium text-zinc-900 dark:text-zinc-100">{lead.owner || 'Neznámý majitel'}</p>
+                                        <div className="flex items-center gap-1.5">
+                                            <p className="font-medium text-zinc-900 dark:text-zinc-100">{lead.owner || 'Neznámý majitel'}</p>
+                                            {lead.owner_source === 'ARES' && (
+                                                <span className="text-[10px] bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 px-1.5 py-0.5 rounded-full font-semibold border border-blue-100 dark:border-blue-800" title="Ověřeno v ARES">ARES</span>
+                                            )}
+                                        </div>
                                         <p className="text-xs text-zinc-500 flex items-center gap-1 mt-1">
                                             <Phone size={12} /> {lead.phone || 'Bez telefonu'}
                                         </p>
@@ -177,7 +185,7 @@ const LeadsPage = () => {
                     </tbody>
                 </table>
             </div>
-        </div>
+        </div >
     );
 };
 

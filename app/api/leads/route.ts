@@ -11,10 +11,12 @@ export async function GET() {
         c.name as company,
         c.city,
         c.website,
+        c.ico,
         w.pagespeed_mobile as "mobileSpeed",
         w.load_time as "loadTime",
         w.uses_ads as ads,
         o.owner_name as owner,
+        o.source as owner_source,
         con.phone
       FROM leads l
       JOIN companies c ON l.company_id = c.id

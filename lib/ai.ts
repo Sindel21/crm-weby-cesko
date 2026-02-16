@@ -49,16 +49,20 @@ export const findCompanyOwner = async (companyName: string, city: string, addres
   }
 };
 
-export const findCompanyContacts = async (companyName: string, website: string): Promise<{ phone?: string, email?: string }> => {
-  if (!website) return {};
+export const findCompanyContacts = async (companyName: string, website: string, ownerName?: string): Promise<{ phone?: string, email?: string }> => {
+  if (!website && !ownerName) return {};
   const model = await getModel();
   const prompt = `
-    Look at the company name: ${companyName} and website: ${website}.
-    Find the official contact phone number and email address for this business.
+    Find the official contact phone number and email address for this business/person.
+    Company: ${companyName}
+    Website: ${website}
+    Decision Maker (Owner/CEO): ${ownerName || 'Unknown'}
+
+    If the owner name is provided, prioritize finding their direct contact info.
     Return ONLY a JSON object:
     {
       "phone": "+420123456789",
-      "email": "info@company.cz"
+      "email": "name@company.cz"
     }
   `;
 
