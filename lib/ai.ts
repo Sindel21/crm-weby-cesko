@@ -4,8 +4,8 @@ import { getSetting } from './db-settings';
 const getModel = async () => {
   const apiKey = await getSetting('gemini_api_key');
   const genAI = new GoogleGenerativeAI(apiKey);
-  // Using a specific version string which is often more stable in EEA regions
-  return genAI.getGenerativeModel({ model: 'gemini-1.5-flash-001' });
+  // Using the standard identifier which is most widely available
+  return genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 };
 
 export interface OwnerEnrichment {

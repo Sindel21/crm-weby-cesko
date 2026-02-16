@@ -18,29 +18,30 @@ const ARES_API_BASE = 'https://ares.gov.cz/ekonomicke-subjekty-v-be/rest';
 
 export const searchAresByName = async (name: string): Promise<AresCompany | null> => {
     try {
-        console.log(`Searching ARES for: ${name}`);
-        const response = await fetch(`${ARES_API_BASE}/ekonomicke-subjekty-res/vyhledat`, {
-            method: 'POST',
+        // Prepare name for URL (encode)
+        const encodedName = encodeURIComponent(name);
+        console.log(`Searching ARES (GET) for: ${name}`);
+
+        const response = await fetch(`${ARES_API_BASE}/ekonomicke-subjekty?obchodniJmeno=${encodedName}&pocet=1`, {
             headers: {
-                'Content-Type': 'application/json',
+                'Accept': 'application/json',
                 'User-Agent': 'CRM-App-Czech-Republic (jansindelovsky@gmail.com)'
-            },
-            body: JSON.stringify({
-                obchodniJmeno: name,
-                pocet: 1,
-                start: 0
-            })
+            }
         });
 
         if (!response.ok) {
-            console.error('ARES search failed:', response.statusText);
+            const errText = await response.text();
+            console.error(`ARES search failed (${response.status}):`, errText.substring(0, 500));
             return null;
         }
 
         const data = await response.json();
         const firstMatch = data.ekonomickeSubjekty?.[0];
 
-        if (!firstMatch) return null;
+        if (!firstMatch) {
+            console.log(`ARES: No subject found for name: ${name}`);
+            return null;
+        }
 
         return {
             ico: firstMatch.ico,
@@ -56,15 +57,16 @@ export const searchAresByName = async (name: string): Promise<AresCompany | null
 export const getAresRepresentatives = async (ico: string): Promise<string[]> => {
     try {
         console.log(`Fetching representatives for IČO: ${ico}`);
-        // VR service returns Veřejný Rejstřík data including representatives
         const response = await fetch(`${ARES_API_BASE}/ekonomicke-subjekty-vr/${ico}`, {
             headers: {
+                'Accept': 'application/json',
                 'User-Agent': 'CRM-App-Czech-Republic (jansindelovsky@gmail.com)'
             }
         });
 
         if (!response.ok) {
-            console.error('ARES VR failed:', response.statusText);
+            const errText = await response.text();
+            console.error(`ARES VR failed (${response.status}):`, errText.substring(0, 500));
             return [];
         }
 
