@@ -4,21 +4,8 @@ import { getSetting } from './db-settings';
 const getModel = async () => {
   const apiKey = await getSetting('gemini_api_key');
   const genAI = new GoogleGenerativeAI(apiKey);
-  return genAI.getGenerativeModel({
-    model: 'gemini-1.5-flash-latest',
-    tools: [
-      {
-        // @ts-ignore
-        googleSearchRetrieval: {
-          dynamicRetrievalConfig: {
-            // @ts-ignore
-            mode: 'MODE_DYNAMIC',
-            dynamicThreshold: 0.3,
-          },
-        },
-      },
-    ] as any,
-  });
+  // Using a specific version string which is often more stable in EEA regions
+  return genAI.getGenerativeModel({ model: 'gemini-1.5-flash-001' });
 };
 
 export interface OwnerEnrichment {
